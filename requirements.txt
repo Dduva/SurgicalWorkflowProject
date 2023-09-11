@@ -1,0 +1,14 @@
+pytorch-lightning
+torchvision
+pandas==2.0.3
+scikit-learn
+opencv-python
+ConfigArgParse
+torchsummary
+pycm
+albumentations
+torch==2.0.0
+numpy
+matplotlib
+seaborn
+
