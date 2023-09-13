@@ -9,7 +9,7 @@ import pandas
 from sklearn.metrics import classification_report
 from enum import Enum
 import numpy
-from baseline_resnet import get_data, resnetBaseline, StatefulLSTM, get_indices, SeqSampler, \
+from model_runner.model_runner import get_data, resnetBaseline, StatefulLSTM, get_indices, SeqSampler, \
     Implementation, VideoBatchSampler
 
 
