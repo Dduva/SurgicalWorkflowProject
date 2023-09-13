@@ -4,7 +4,7 @@ import configargparse
 import os
 from pathlib import Path
 import torch
-from new_model.baseline_resnet import get_data, train_model, Implementation, resnetBaseline, classification_report, \
+from model_runner import get_data, train_model, Implementation, resnetBaseline, classification_report, \
     build_configargparser
 import pandas
 import numpy as np

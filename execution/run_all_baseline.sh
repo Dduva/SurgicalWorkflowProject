@@ -10,7 +10,7 @@ echo "Master script started on $(date)"
 # Define a function to run the Python script with different config files
 run_baseline_resnet() {
     CONFIG_FILE=$1
-    echo "Starting baseline_resnet.py with config: $CONFIG_FILE..."
+    echo "Starting model_runner.py with config: $CONFIG_FILE..."
     python3.9 model_runner.py -c $CONFIG_FILE
 
     if [ $? -eq 0 ]; then
