@@ -4,8 +4,8 @@ import configargparse
 import os
 from pathlib import Path
 import torch
-from model_runner import get_data, train_model, Implementation, resnetBaseline, classification_report, \
-    build_configargparser
+from model_runs.model_runner import get_data, train_model, Implementation, resnetBaseline, classification_report, \
+    build_configargparser, StatefulLSTM
 import pandas
 import numpy as np
 
@@ -41,7 +41,7 @@ def build_configargparser(parser):
     parser.add_argument('--model', default='ResNet', type=str, help='model type')
     parser.add_argument('--resnet_weights', type=str, help='path for the resnet weights')
     parser.add_argument('--input_size', default=2048, type=int, help='input size')
-    parser.add_argument('--hidden_size', default=256, type=int, help='hidden size')
+    parser.add_argument('--hidden_size', default=256, type=int, nargs='*', help='hidden size')
     parser.add_argument('--num_classes', default=5, type=int, help='Number of classes')
 
     known_args, _ = parser.parse_known_args()
@@ -54,6 +54,8 @@ def retrieve_hyperparameter_results(data_loader, device, hparams, type):
     weights_path = os.path.join(saving_path, f'{type}_weights.pth')
     if hparams.model == Implementation.ResNet.value:
         model = resnetBaseline()
+    elif hparams.model == Implementation.StatefulLSTM.value:
+        model = StatefulLSTM(hparams.resnet_weights, hparams.input_size, hparams.hidden_size, hparams.num_classes)
     else:
         raise ValueError('This implementation does not exist')
     model.load_state_dict(torch.load(weights_path))
@@ -69,9 +71,9 @@ def retrieve_hyperparameter_results(data_loader, device, hparams, type):
     with torch.no_grad():
         # Iterate over the test data and generate predictions
         for i, data in enumerate(data_loader, 0):
-            inputs, labels, _ = data
-            inputs, labels = inputs.to(device), labels.to(device)
-            outputs = model.forward(inputs)
+            inputs, labels, video_ids = data
+            inputs, labels, video_ids = inputs.to(device), labels.to(device), video_ids.to(device)
+            outputs = model.forward(inputs, video_ids)
             # Set total and correct
             _, predicted = torch.max(outputs.data, 1)
             y_pred.extend(predicted.detach().cpu().tolist())
@@ -125,9 +127,11 @@ def main():
 
     device = torch.device("cuda" if hparams.gpu_usg and torch.cuda.is_available() else "cpu")
 
-    learning_rates = hparams.learning_rate
-    momentum_values = hparams.momentum
-    weight_decay_values = hparams.weight_decay
+    # learning_rates = hparams.learning_rate
+    # momentum_values = hparams.momentum
+    # weight_decay_values = hparams.weight_decay
+    train_batch_sizes = hparams.train_batch_size
+    hidden_sizes = hparams.hidden_size
 
     saving_path = os.path.join(hparams.path_for_saving, hparams.run_name)
     if not os.path.exists(saving_path):
@@ -137,32 +141,37 @@ def main():
 
     # Iterating over the parameters that vary in the configuration. This needs changing if more hyperparameters are
     # tried. i.e. TODO: this could be made more flexible where the config yaml file is parsed.
-    for learning_rate in learning_rates:
-        for momentum in momentum_values:
-            for weight_decay in weight_decay_values:
-                hparams.learning_rate = learning_rate
-                hparams.momentum = momentum
-                hparams.weight_decay = weight_decay
+    for train_batch_size in train_batch_sizes:
+        for hidden_size in hidden_sizes:
+    # for learning_rate in learning_rates:
+    #     for momentum in momentum_values:
+    #         for weight_decay in weight_decay_values:
+            hparams.train_batch_size = train_batch_size
+            hparams.val_batch_size = train_batch_size
+            hparams.hidden_size = hidden_size
 
-                val_loader, test_loader = \
-                    train_model(hparams, (train_dataset), (train_num), (val_dataset, test_dataset), (val_num, test_num))
+            val_loader, test_loader = \
+                train_model(hparams, (train_dataset), (train_num), (val_dataset, test_dataset), (val_num, test_num))
 
-                best_model_metrics_dict = retrieve_hyperparameter_results(val_loader, device, hparams, type='best_model')
-                last_model_metrics_dict = retrieve_hyperparameter_results(val_loader, device, hparams, type='last_model')
+            best_model_metrics_dict = retrieve_hyperparameter_results(val_loader, device, hparams, type='best_model')
+            last_model_metrics_dict = retrieve_hyperparameter_results(val_loader, device, hparams, type='last_model')
 
-                # delete weights after each iteration
-                param_dict = {
-                    'learning_rate': learning_rate,
-                    'momentum': momentum,
-                    'weight_decay': weight_decay,
-                }
-                param_dict.update({'type': 'best'})
-                merged_best_dict = {**param_dict, **best_model_metrics_dict}
-                param_dict.update({'type': 'last'})
-                merged_last_dict = {**param_dict, **last_model_metrics_dict}
+            # delete weights after each iteration
+            param_dict = {
+                # 'learning_rate': learning_rate,
+                # 'momentum': momentum,
+                # 'weight_decay': weight_decay,
+                'hidden_size': hidden_size,
+                'train_batch_size': train_batch_size,
+                'val_batch_size': train_batch_size
+            }
+            param_dict.update({'type': 'best'})
+            merged_best_dict = {**param_dict, **best_model_metrics_dict}
+            param_dict.update({'type': 'last'})
+            merged_last_dict = {**param_dict, **last_model_metrics_dict}
 
-                output_dfs.append(pandas.DataFrame(merged_best_dict))
-                output_dfs.append(pandas.DataFrame(merged_last_dict))
+            output_dfs.append(pandas.DataFrame(merged_best_dict))
+            output_dfs.append(pandas.DataFrame(merged_last_dict))
 
     final_results = pandas.concat(output_dfs).reset_index().drop(columns='index')
     final_results.to_csv(os.path.join(saving_path, f'{hparams.run_name}_results.csv'))
