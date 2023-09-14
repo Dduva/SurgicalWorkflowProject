@@ -1,0 +1,3 @@
+,Run name,Temporal function,n,Weighted F1 score,Mean accuracy,Weighted precision,Weighted recall
+0,new_nn_inv_weights_refl_1fps_250_fold4,modal,1,0.4170674421205682,0.39847296284801637,0.4111993097703363,0.33369178175048486
+1,new_nn_inv_weights_refl_1fps_250_fold4,threshold,1,0.4170674421205682,0.39847296284801637,0.4111993097703363,0.33369178175048486

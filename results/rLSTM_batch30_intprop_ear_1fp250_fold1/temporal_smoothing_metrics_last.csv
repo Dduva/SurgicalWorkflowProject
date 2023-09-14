@@ -1,0 +1,3 @@
+,Run name,Temporal function,n,Weighted F1 score,Mean accuracy,Weighted precision,Weighted recall
+0,rLSTM_batch30_intprop_ear_1fp250_fold1,modal,1,0.44759256040326784,0.44903173721369927,0.4778652071837353,0.47441103096579323
+1,rLSTM_batch30_intprop_ear_1fp250_fold1,threshold,1,0.44759256040326784,0.44903173721369927,0.4778652071837353,0.47441103096579323

@@ -1,0 +1,8 @@
+,Value
+Overall accuracy,0.438
+Macro average precision,0.398
+Weighted average precision,0.429
+Macro average recall,0.348
+Weighted average recall,0.438
+Macro average F1,0.343
+Weighted average F1,0.414

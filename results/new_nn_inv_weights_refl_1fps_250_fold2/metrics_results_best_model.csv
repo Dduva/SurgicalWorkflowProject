@@ -1,0 +1,6 @@
+Categories,Precision,Recall,F1,Count
+tumour_debulking,0.517,0.369,0.431,7342
+dissection_medial,0.472,0.582,0.521,18106
+dissection_inferior,0.488,0.463,0.475,9687
+dissection_superior,0.188,0.118,0.145,3053
+dissection_lateral,0.255,0.37,0.302,6045
