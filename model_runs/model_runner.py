@@ -702,7 +702,7 @@ def create_metrics_table(prediction, actual, renaming_dict):
     return final_results
 
 
-def produce_evaluation_plots(data_loader, device, hparams, type):
+def produce_evaluation_plots(data_loader, device, hparams, type, label_dict):
 
     saving_path = os.path.join(hparams.path_for_saving, hparams.run_name)
     weights_path = os.path.join(saving_path, f'{type}_weights.pth')
@@ -722,13 +722,13 @@ def produce_evaluation_plots(data_loader, device, hparams, type):
     filename = f'{type}'
     y_pred = []
     y_actual = []
-    label_dict = {
-        'tumour_debulking': 0,
-        'dissection_medial': 1,
-        'dissection_inferior': 2,
-        'dissection_superior': 3,
-        'dissection_lateral': 4
-    }
+    # label_dict = {
+    #     'tumour_debulking': 0,
+    #     'dissection_medial': 1,
+    #     'dissection_inferior': 2,
+    #     'dissection_superior': 3,
+    #     'dissection_lateral': 4
+    # }
 
     with torch.no_grad():
         # Iterate over the test data and generate predictions
@@ -766,8 +766,12 @@ def produce_evaluation_plots(data_loader, device, hparams, type):
         ax.set_title('Confusion Matrix')
         ax.set_xlabel('Predicted Labels')
         ax.set_ylabel('True Labels')
-        ax.xaxis.set_ticklabels(['debulk', 'medial', 'inferior', 'superior', 'lateral'])
-        ax.yaxis.set_ticklabels(['debulk', 'medial', 'inferior', 'superior', 'lateral'])
+        if hparams.labels == 'condensed_steps':
+            labels = ['debulk', 'dissection']
+        else:
+            labels = ['debulk', 'medial', 'inferior', 'superior', 'lateral']
+        ax.xaxis.set_ticklabels(labels)
+        ax.yaxis.set_ticklabels(labels)
         plt.savefig(os.path.join(saving_path, 'network_confusion_matrix_{0}.png'.format(filename)))
 
         """
@@ -815,13 +819,26 @@ def main():
     val_loader, test_loader = \
         train_model(hparams, (train_dataset), (train_num), (val_dataset, test_dataset), (val_num, test_num))
 
+    if hparams.labels == 'condensed_steps':
+        label_dict = {
+            'tumour_debulking': 0,
+            'dissection': 1,
+        }
+    else:
+        label_dict = {
+            'tumour_debulking': 0,
+            'dissection_medial': 1,
+            'dissection_inferior': 2,
+            'dissection_superior': 3,
+            'dissection_lateral': 4
+        }
     # produce evaluation results on the best model
-    produce_evaluation_plots(val_loader, device, hparams, type='best_model')
+    produce_evaluation_plots(val_loader, device, hparams, type='best_model', label_dict=label_dict)
     # produce evaluation results on the last model
-    produce_evaluation_plots(val_loader, device,  hparams, type='last_model')
+    produce_evaluation_plots(val_loader, device,  hparams, type='last_model', label_dict=label_dict)
 
     if hparams.test_dataset:
-        produce_evaluation_plots(test_loader, device, hparams, type='test_results')
+        produce_evaluation_plots(test_loader, device, hparams, type='test_results', label_dict=label_dict)
 
 
 if __name__ == "__main__":
