@@ -1,0 +1,27 @@
+run_name : new_network_inv_weights_refl_1fps_250
+gpu_usg : 1
+sequence_length : 1
+train_batch_size : 30
+val_batch_size : 30
+optimizer_choice : 'SGD'
+multi_optim : 1
+epochs : 50
+patience: 30
+workers : 8
+learning_rate : 1e-2
+momentum : 0.9
+weight_decay : 5e-4
+dampening : 0
+use_nesterov : 1
+sgd_adjust_lr : 1
+sgd_step : 5
+sgd_gamma : 0.1
+adjusted_weights : 0
+inv_prop_weights : 1
+test_dataset : 0
+model: 'ResNet'
+data_transformation_option_1 : 0
+data_transformation_option_2 : 1
+path_for_saving: '/home/dorothee/results'
+labels: 'condensed_steps'
+datafile: 'server_train_val_paths_labels_fold5_combined_steps_eartype_info.pkl'

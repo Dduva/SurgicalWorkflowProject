@@ -56,6 +56,7 @@ def build_configargparser(parser):
     parser.add_argument('--input_size', default=2048, type=int, help='input size')
     parser.add_argument('--hidden_size', default=256, type=int, help='hidden size')
     parser.add_argument('--num_classes', default=5, type=int, help='Number of classes')
+    parser.add_argument('--labels', default='default', type=int, help='labels')
 
     known_args, _ = parser.parse_known_args()
     return parser, known_args
@@ -768,7 +769,7 @@ def produce_evaluation_plots(data_loader, device, hparams, type, label_dict):
         ax.set_ylabel('True Labels')
         if hparams.labels == 'condensed_steps':
             labels = ['debulk', 'dissection']
-        else:
+        elif hparams.labels == 'default':
             labels = ['debulk', 'medial', 'inferior', 'superior', 'lateral']
         ax.xaxis.set_ticklabels(labels)
         ax.yaxis.set_ticklabels(labels)
@@ -824,7 +825,7 @@ def main():
             'tumour_debulking': 0,
             'dissection': 1,
         }
-    else:
+    elif hparams.labels == 'default':
         label_dict = {
             'tumour_debulking': 0,
             'dissection_medial': 1,
