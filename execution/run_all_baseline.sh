@@ -30,10 +30,15 @@ run_baseline_resnet() {
 # run_baseline_resnet "/home/dorothee/configs/config_train_original_runs_no_weights.yml"
 # run_baseline_resnet "/home/dorothee/configs/config_train_original_runs_inv_weights.yml"
 # run_baseline_resnet "/home/dorothee/configs/config_train_original_runs_adj_weights.yml"
-run_baseline_resnet "/home/dorothee/configs/resnet_LSTM_batch20_invprop_ear_1fp250.yml"
-run_baseline_resnet "/home/dorothee/configs/resnet_LSTM_batch40_invprop_ear_1fp250.yml"
-run_baseline_resnet "/home/dorothee/configs/resnet_LSTM_batch50_invprop_ear_1fp250.yml"
-run_baseline_resnet "/home/dorothee/configs/resnet_LSTM_batch100_invprop_ear_1fp250.yml"
+# run_baseline_resnet "/home/dorothee/configs/resnet_LSTM_batch20_invprop_ear_1fp250.yml"
+# run_baseline_resnet "/home/dorothee/configs/resnet_LSTM_batch40_invprop_ear_1fp250.yml"
+# run_baseline_resnet "/home/dorothee/configs/resnet_LSTM_batch50_invprop_ear_1fp250.yml"
+# run_baseline_resnet "/home/dorothee/configs/resnet_LSTM_batch100_invprop_ear_1fp250.yml"
+run_baseline_resnet "/home/dorothee/configs/baseline_new_network_inv_weights_eartype_1fps_combined_250res.yml"
+run_baseline_resnet "/home/dorothee/configs/baseline_new_network_inv_weights_eartype_1fps_combined_250res_fold2.yml"
+run_baseline_resnet "/home/dorothee/configs/baseline_new_network_inv_weights_eartype_1fps_combined_250res_fold3.yml"
+run_baseline_resnet "/home/dorothee/configs/baseline_new_network_inv_weights_eartype_1fps_combined_250res_fold4.yml"
+run_baseline_resnet "/home/dorothee/configs/baseline_new_network_inv_weights_eartype_1fps_combined_250res_fold5.yml"
 
 # ... Add more as needed
 

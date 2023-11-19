@@ -56,7 +56,7 @@ def build_configargparser(parser):
     parser.add_argument('--input_size', default=2048, type=int, help='input size')
     parser.add_argument('--hidden_size', default=256, type=int, help='hidden size')
     parser.add_argument('--num_classes', default=5, type=int, help='Number of classes')
-    parser.add_argument('--labels', default='default', type=int, help='labels')
+    parser.add_argument('--labels', default='default', type=str, help='labels')
 
     known_args, _ = parser.parse_known_args()
     return parser, known_args
