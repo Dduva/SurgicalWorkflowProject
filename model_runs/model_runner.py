@@ -771,6 +771,8 @@ def produce_evaluation_plots(data_loader, device, hparams, type, label_dict):
             labels = ['debulk', 'dissection']
         elif hparams.labels == 'default':
             labels = ['debulk', 'medial', 'inferior', 'superior', 'lateral']
+        elif hparams.labels == 'phase':
+            labels = ['approach', 'debulk and dissection', 'closure']
         ax.xaxis.set_ticklabels(labels)
         ax.yaxis.set_ticklabels(labels)
         plt.savefig(os.path.join(saving_path, 'network_confusion_matrix_{0}.png'.format(filename)))
@@ -832,6 +834,12 @@ def main():
             'dissection_inferior': 2,
             'dissection_superior': 3,
             'dissection_lateral': 4
+        }
+    elif hparams.labels == 'phase':
+        label_dict = {
+            'approach': 0,
+            'debulk_dissection': 1,
+            'closure': 2,
         }
     # produce evaluation results on the best model
     produce_evaluation_plots(val_loader, device, hparams, type='best_model', label_dict=label_dict)

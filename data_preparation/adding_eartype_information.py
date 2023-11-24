@@ -4,7 +4,8 @@ import os
 import re
 
 # OVERALL_PATH = r'/Users/dorotheeduvaux 1/UCL CSML/MSc Project/RS_data/pkl_files'
-OVERALL_PATH = r'/Users/dorotheeduvaux 1/UCL CSML/MSc Project/Video analytics'
+# OVERALL_PATH = r'/Users/dorotheeduvaux 1/UCL CSML/MSc Project/Video analytics'
+OVERALL_PATH = r'/Users/dorotheeduvaux/PycharmProjects/SurgicalWorkflowProject/raw_data'
 
 
 def retrieve_video_ear_type(input_file):
@@ -38,12 +39,19 @@ def main():
     pkl_files = [
                  # 'server_train_val_paths_labels',
                  # 'high_res_60k_frames',
-                 'server_train_val_paths_labels_fold2',
-                 'server_train_val_paths_labels_fold3',
-                 'server_train_val_paths_labels_fold4',
-                 'server_train_val_paths_labels_fold5',
+                 # 'server_train_val_paths_labels_fold2',
+                 # 'server_train_val_paths_labels_fold3',
+                 # 'server_train_val_paths_labels_fold4',
+                 # 'server_train_val_paths_labels_fold5',
+                 'server_train_val_paths_phases_labels',
+                 'server_train_val_paths_phases_labels_fold2',
+                 'server_train_val_paths_phases_labels_fold3',
+                 'server_train_val_paths_phases_labels_fold4',
+                 'server_train_val_paths_phases_labels_fold5',
                  ]
-    ear_type_dict = retrieve_video_ear_type(r'/Users/dorotheeduvaux 1/UCL CSML/MSc Project/RS_data/VS_side.xlsx')
+
+    # ear_type_dict = retrieve_video_ear_type(r'/Users/dorotheeduvaux 1/UCL CSML/MSc Project/RS_data/VS_side.xlsx')
+    ear_type_dict = retrieve_video_ear_type(r'/Users/dorotheeduvaux/UCL CSML/MSc Project/RS_data/VS_side.xlsx')
 
     for pkl_file in pkl_files:
         with open(os.path.join(OVERALL_PATH, pkl_file + '.pkl'), 'rb') as file:
@@ -69,9 +77,9 @@ def main():
 
 
 if __name__ == '__main__':
-    path = '/Users/dorotheeduvaux/PycharmProjects/mscProject/data_inputs/server_train_val_paths_labels.pkl'
-    with open(path, 'rb') as file:
-        data = pickle.load(file)
+    # path = '/Users/dorotheeduvaux/PycharmProjects/mscProject/data_inputs/server_train_val_paths_labels.pkl'
+    # with open(path, 'rb') as file:
+    #     data = pickle.load(file)
     main()
 
 
