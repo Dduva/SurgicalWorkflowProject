@@ -106,10 +106,10 @@ def compute_final_metrics(saving_path, final_results_folder, folder_name, weight
         'Run name': [folder_name],
         'Temporal function': ['modal'],
         'n': [optimal_modal_n],
-        'Weighted F1 score': [metrics_array[0]],
-        'Mean accuracy': [metrics_array[1]],
+        'Weighted F1 score': [metrics_array[6]],
+        'Mean accuracy': [metrics_array[0]],
         'Weighted precision': [metrics_array[2]],
-        'Weighted recall': [metrics_array[3]]
+        'Weighted recall': [metrics_array[4]]
     })
     tsf_df.append(new_row_df)
 
@@ -122,10 +122,10 @@ def compute_final_metrics(saving_path, final_results_folder, folder_name, weight
         'Run name': [folder_name],
         'Temporal function': ['threshold'],
         'n': [optimal_threshold_n],
-        'Weighted F1 score': [metrics_array[0]],
-        'Mean accuracy': [metrics_array[1]],
+        'Weighted F1 score': [metrics_array[6]],
+        'Mean accuracy': [metrics_array[0]],
         'Weighted precision': [metrics_array[2]],
-        'Weighted recall': [metrics_array[3]]
+        'Weighted recall': [metrics_array[4]]
     })
     tsf_df.append(new_row_df)
     output_df = pandas.concat(tsf_df).reset_index().drop(columns='index')
@@ -134,7 +134,7 @@ def compute_final_metrics(saving_path, final_results_folder, folder_name, weight
 
 def main():
     saving_path = '/Users/dorotheeduvaux 1/UCL CSML/MSc Project'
-    final_results_folder = 'FinalResults'
+    final_results_folder = 'FinalResults/extraResults'
     weight_type = 'last'
     total_window_size = 20
 
@@ -147,12 +147,25 @@ def main():
     #     'new_nn_inv_weights_refl_1fps_250_fold5',
     # ]
 
+    # folder_names = [
+    #     'rLSTM_batch30_intprop_ear_1fp250_fold1',
+    #     'rLSTM_batch30_intprop_ear_1fp250_fold2',
+    #     'rLSTM_batch30_intprop_ear_1fp250_fold3',
+    #     'rLSTM_batch30_intprop_ear_1fp250_fold4',
+    #     'rLSTM_batch30_intprop_ear_1fp250_fold5'
+    # ]
+
     folder_names = [
-        'rLSTM_batch30_intprop_ear_1fp250_fold1',
-        'rLSTM_batch30_intprop_ear_1fp250_fold2',
-        'rLSTM_batch30_intprop_ear_1fp250_fold3',
-        'rLSTM_batch30_intprop_ear_1fp250_fold4',
-        'rLSTM_batch30_intprop_ear_1fp250_fold5'
+        'new_network_inv_weights_refl_1fps_250_comb_1',
+        'new_network_inv_weights_refl_1fps_250_comb_2',
+        'new_network_inv_weights_refl_1fps_250_comb_3',
+        'new_network_inv_weights_refl_1fps_250_comb_4',
+        'new_network_inv_weights_refl_1fps_250_comb_5',
+        'new_network_inv_weights_refl_1fps_250_phase_fold1',
+        'new_network_inv_weights_refl_1fps_250_phase_fold2',
+        'new_network_inv_weights_refl_1fps_250_phase_fold3',
+        'new_network_inv_weights_refl_1fps_250_phase_fold4',
+        'new_network_inv_weights_refl_1fps_250_phase_fold5',
     ]
 
     for folder_name in folder_names:
