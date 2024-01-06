@@ -6,7 +6,7 @@ import pandas as pd
 
 def main():
     # Replace with the directory containing your TensorBoard logs
-    log_dir = '../FinalTensorboard'
+    log_dir = '../tensorboard_results'
 
     # Initialize an empty list to collect all dataframes
     dfs = []
@@ -47,7 +47,7 @@ def main():
     result_df = pd.concat(dfs, ignore_index=True)
 
     # Save the result as a CSV file
-    result_df.to_csv('/Users/dorotheeduvaux 1/UCL CSML/MSc Project/FinalResults/tensorboard_data.csv', index=False)
+    result_df.to_csv('/Users/dorotheeduvaux 1/UCL CSML/MSc Project/FinalResults/tensorboard_data_withExtraResults.csv', index=False)
 
 
 if __name__ == '__main__':
