@@ -68,12 +68,13 @@ class Implementation(Enum):
 
 
 class DatasetObject(Dataset):
-    def __init__(self, file_paths, file_labels, video_ids, transform_list=None, ):
+    def __init__(self, file_paths, file_labels, video_ids, transform_list=None, weights=None):
         self.file_paths_dict = dict([(i, path) for i, path in enumerate(file_paths)])
         self.file_labels_dict = dict([(i, label) for i, label in enumerate(file_labels)])
         self.video_ids_dict = dict([(i, label) for i, label in enumerate(video_ids)])
         self.transform_dict = dict([(i, transform) for i, transform in enumerate(transform_list)])
         self.loader = self.pil_loader
+        self.weights = weights
 
     def pil_loader(self, path):
         with open(path, 'rb') as f:
@@ -84,19 +85,20 @@ class DatasetObject(Dataset):
         img_names = self.file_paths_dict[index]
         labels_phase = self.file_labels_dict[index]
         video_id = self.video_ids_dict[index]
+        weights = self.weights[index]
         imgs = self.loader(img_names)
         transform = self.transform_dict[index]
         if transform is not None:
             imgs = transform(imgs)
 
-        return imgs, labels_phase, video_id
+        return imgs, labels_phase, video_id, weights
 
     def __len__(self):
         return len(self.file_paths_dict)
 
 
 class resnetBaseline(torch.nn.Module):
-    def __init__(self):
+    def __init__(self, num_classes):
         super(resnetBaseline, self).__init__()
         resnet = models.resnet50(pretrained=True)
         self.share = torch.nn.Sequential()
@@ -112,7 +114,7 @@ class resnetBaseline(torch.nn.Module):
         self.fc = nn.Sequential(nn.Linear(2048, 512),
                                 nn.ReLU(),
                                 nn.Dropout(0.5),
-                                nn.Linear(512, 5))
+                                nn.Linear(512, num_classes))
 
     def forward(self, x, video_ids=None):
         x = self.share.forward(x)
@@ -135,7 +137,7 @@ class StatefulLSTM(torch.nn.Module):
 
         self.previous_video_id = 1
         # Load pre-trained resNet model without the final classification layer
-        self.resnet = resnetBaseline()
+        self.resnet = resnetBaseline(num_classes)
         self.resnet.load_state_dict(torch.load(resnet_weights))
         self.resnet = nn.Sequential(*list(self.resnet.children())[:-1])
         # Freeze the weights of that resnet model
@@ -205,6 +207,19 @@ def get_indices(sequence_length, list_of_lengths):
             idx.append(j)
         count += length
     return idx
+
+
+def compute_weights(labels, size):
+    labels = torch.tensor(labels)
+    weights = torch.zeros(size, dtype=torch.float)
+    counts = torch.bincount(labels)
+    zeros_to_add = torch.zeros(size-len(counts), dtype=counts.dtype)
+    # Concatenate the two tensors
+    counts = torch.cat((counts, zeros_to_add))
+    for idx, val in enumerate(counts):
+        weights[idx] += 1/(val + torch.tensor(0.001))
+    weights = weights/weights.sum()
+    return weights
 
 
 def get_data(data_path, hparams):
@@ -309,9 +324,20 @@ def get_data(data_path, hparams):
     print(set(val_labels))
     print(set(test_labels))
 
-    train_dataset = DatasetObject(train_paths, train_labels, train_video_ids, train_transforms_list)
-    val_dataset = DatasetObject(val_paths, val_labels, val_video_ids, val_transforms_list)
-    test_dataset = DatasetObject(test_paths, test_labels, test_video_ids, test_transforms_list)
+    if hparams.labels == 'condensed_steps':
+        size = 2
+    elif hparams.labels == 'phase':
+        size = 3
+    else:
+        size = 5
+
+    train_weights = np.tile(compute_weights(train_labels, size), (len(train_paths), 1))
+    test_weights = np.tile(compute_weights(test_labels, size), (len(test_paths), 1))
+    val_weights = np.tile(compute_weights(val_labels, size), (len(val_paths), 1))
+
+    train_dataset = DatasetObject(train_paths, train_labels, train_video_ids, train_transforms_list, train_weights)
+    val_dataset = DatasetObject(val_paths, val_labels, val_video_ids, val_transforms_list, val_weights)
+    test_dataset = DatasetObject(test_paths, test_labels, test_video_ids, test_transforms_list, test_weights)
 
     return train_dataset, train_num_each, val_dataset, val_num_each, test_dataset, test_num_each
 
@@ -360,7 +386,7 @@ def evaluate_model(model, data_loader, batch_size, indices, device, sequence_len
 
     with torch.no_grad():
         for data in data_loader:
-            inputs, labels, video_ids = data
+            inputs, labels, video_ids, weights = data
             inputs, labels, video_ids = inputs.to(device), labels.to(device), video_ids.to(device)
 
             labels = labels[(sequence_length - 1)::sequence_length]
@@ -428,7 +454,7 @@ def train_model(hparams, train_dataset, train_num_each, val_dataset, val_num_eac
         test_loader = DataLoader(test_dataset, batch_size=hparams.val_batch_size, sampler=test_sampler,
                                  num_workers=hparams.workers, pin_memory=False)
 
-        model = resnetBaseline()
+        model = resnetBaseline(hparams.num_classes)
 
     elif hparams.model == Implementation.StatefulLSTM.value:
         # These loaders are for the LSTM type of runs and are required to segment the data according to batch size
@@ -505,13 +531,23 @@ def train_model(hparams, train_dataset, train_num_each, val_dataset, val_num_eac
         train_start_time = time.time()
         for i, data in enumerate(train_loader):
             optimizer.zero_grad()
-            inputs, labels, video_ids = data
+            inputs, labels, video_ids, overall_weights = data
             weights = None
+
+            if hparams.labels == 'condensed_steps':
+                size = 2
+            elif hparams.labels == 'phase':
+                size = 3
+            else:
+                size = 5
 
             # Weights > 1
             if hparams.adjusted_weights:
-                weights = torch.zeros(5, dtype=torch.int64)
+                weights = torch.zeros(size, dtype=torch.int64)
                 counts = torch.bincount(labels)
+                zeros_to_add = torch.zeros(size-len(counts), dtype=counts.dtype)
+                # Concatenate the two tensors
+                counts = torch.cat((counts, zeros_to_add))
                 for idx, val in enumerate(counts):
                     weights[idx] += val
                 weights = weights.sum()/weights
@@ -519,17 +555,23 @@ def train_model(hparams, train_dataset, train_num_each, val_dataset, val_num_eac
 
             # Weights inversely proportional
             if hparams.inv_prop_weights:
-                weights = torch.zeros(5, dtype=torch.float)
-                counts = torch.bincount(labels)
-                for idx, val in enumerate(counts):
-                    weights[idx] += 1/(val + torch.tensor(0.001))
-                weights = weights/weights.sum()
+                weights = overall_weights[0]
                 weights = weights.to(device)
+                #weights = torch.zeros(size, dtype=torch.float)
+                #counts = torch.bincount(labels)
+                #zeros_to_add = torch.zeros(size-len(counts), dtype=counts.dtype)
+                # Concatenate the two tensors
+                #counts = torch.cat((counts, zeros_to_add))
+                #for idx, val in enumerate(counts):
+                #    weights[idx] += 1/(val + torch.tensor(0.001))
+                #weights = weights/weights.sum()
+                #weights = weights.to(device)
 
             inputs, labels, video_ids = inputs.to(device), labels.to(device), video_ids.to(device)
             labels = labels[(sequence_length - 1)::sequence_length]
             outputs = model.forward(inputs, video_ids)
             outputs = outputs[sequence_length - 1::sequence_length]
+            # print(set(labels), set(outputs))
 
             _, predictions = torch.max(outputs.data, 1)
 
@@ -684,9 +726,9 @@ def create_metrics_table(prediction, actual, renaming_dict):
     df['count'] = 1
     grouped_df = df.groupby(['pred', 'actual'])['count'].sum().reset_index()
     output_df = grouped_df.pivot(index='pred', columns='actual', values='count').fillna(0)
-    missing_steps = [item for item in range(5) if item not in output_df.index.values]
+    missing_steps = [item for item in range(len(renaming_dict)) if item not in output_df.index.values]
     for missing_step in missing_steps:
-        new_row = {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0, 4: 0.0}
+        new_row = dict([[item,0.0] for item in range(len(renaming_dict))])
         output_df.loc[missing_step, :] = new_row
     output_df = output_df.sort_index()
     output_df = output_df.rename(index=renaming_dict)
@@ -708,7 +750,7 @@ def produce_evaluation_plots(data_loader, device, hparams, type, label_dict):
     saving_path = os.path.join(hparams.path_for_saving, hparams.run_name)
     weights_path = os.path.join(saving_path, f'{type}_weights.pth')
     if hparams.model == Implementation.ResNet.value:
-        model = resnetBaseline()
+        model = resnetBaseline(hparams.num_classes)
     elif hparams.model == Implementation.StatefulLSTM.value:
         model = StatefulLSTM(hparams.resnet_weights, hparams.input_size, hparams.hidden_size, hparams.num_classes)
     else:
@@ -760,7 +802,7 @@ def produce_evaluation_plots(data_loader, device, hparams, type, label_dict):
         """
         Confusion matrix
         """
-        cmatrix = confusion_matrix(y_actual, y_pred, labels=[0, 1, 2, 3, 4])
+        cmatrix = confusion_matrix(y_actual, y_pred, labels=range(len(label_dict)))
         print(cmatrix)
         fig, ax = plt.subplots()
         sns.heatmap(cmatrix, annot=True, ax=ax, cmap='Blues', fmt="d")
