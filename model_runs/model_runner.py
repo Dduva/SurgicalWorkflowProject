@@ -57,6 +57,7 @@ def build_configargparser(parser):
     parser.add_argument('--hidden_size', default=256, type=int, help='hidden size')
     parser.add_argument('--num_classes', default=5, type=int, help='Number of classes')
     parser.add_argument('--labels', default='default', type=str, help='labels')
+    parser.add_argument('--overall_weights', default=0, type=int, help='labels')
 
     known_args, _ = parser.parse_known_args()
     return parser, known_args
@@ -331,13 +332,13 @@ def get_data(data_path, hparams):
     else:
         size = 5
 
-    train_weights = np.tile(compute_weights(train_labels, size), (len(train_paths), 1))
-    test_weights = np.tile(compute_weights(test_labels, size), (len(test_paths), 1))
-    val_weights = np.tile(compute_weights(val_labels, size), (len(val_paths), 1))
+    overall_train_weights = np.tile(compute_weights(train_labels, size), (len(train_paths), 1))
+    overall_test_weights = np.tile(compute_weights(test_labels, size), (len(test_paths), 1))
+    overall_val_weights = np.tile(compute_weights(val_labels, size), (len(val_paths), 1))
 
-    train_dataset = DatasetObject(train_paths, train_labels, train_video_ids, train_transforms_list, train_weights)
-    val_dataset = DatasetObject(val_paths, val_labels, val_video_ids, val_transforms_list, val_weights)
-    test_dataset = DatasetObject(test_paths, test_labels, test_video_ids, test_transforms_list, test_weights)
+    train_dataset = DatasetObject(train_paths, train_labels, train_video_ids, train_transforms_list, overall_train_weights)
+    val_dataset = DatasetObject(val_paths, val_labels, val_video_ids, val_transforms_list, overall_val_weights)
+    test_dataset = DatasetObject(test_paths, test_labels, test_video_ids, test_transforms_list, overall_test_weights)
 
     return train_dataset, train_num_each, val_dataset, val_num_each, test_dataset, test_num_each
 
@@ -554,18 +555,19 @@ def train_model(hparams, train_dataset, train_num_each, val_dataset, val_num_eac
                 weights = weights.to(device)
 
             # Weights inversely proportional
-            if hparams.inv_prop_weights:
+            if hparams.inv_prop_weights and hparams.overall_weights:
                 weights = overall_weights[0]
                 weights = weights.to(device)
-                #weights = torch.zeros(size, dtype=torch.float)
-                #counts = torch.bincount(labels)
-                #zeros_to_add = torch.zeros(size-len(counts), dtype=counts.dtype)
+            elif hparams.inv_prop_weights:
+                weights = torch.zeros(size, dtype=torch.float)
+                counts = torch.bincount(labels)
+                zeros_to_add = torch.zeros(size-len(counts), dtype=counts.dtype)
                 # Concatenate the two tensors
-                #counts = torch.cat((counts, zeros_to_add))
-                #for idx, val in enumerate(counts):
-                #    weights[idx] += 1/(val + torch.tensor(0.001))
-                #weights = weights/weights.sum()
-                #weights = weights.to(device)
+                counts = torch.cat((counts, zeros_to_add))
+                for idx, val in enumerate(counts):
+                   weights[idx] += 1/(val + torch.tensor(0.001))
+                weights = weights/weights.sum()
+                weights = weights.to(device)
 
             inputs, labels, video_ids = inputs.to(device), labels.to(device), video_ids.to(device)
             labels = labels[(sequence_length - 1)::sequence_length]
@@ -776,7 +778,7 @@ def produce_evaluation_plots(data_loader, device, hparams, type, label_dict):
     with torch.no_grad():
         # Iterate over the test data and generate predictions
         for i, data in enumerate(data_loader, 0):
-            inputs, labels, video_ids = data
+            inputs, labels, video_ids, _ = data
             inputs, labels, video_ids = inputs.to(device), labels.to(device), video_ids.to(device)
             outputs = model.forward(inputs, video_ids)
             # Set total and correct
@@ -851,7 +853,7 @@ def main():
     # you are essentially giving the config file path to the "-c" argument.
     # If "-c" is not provided, the parser will look for it in the default_config_files
     parser = configargparse.ArgParser(default_config_files=[os.path.join(Path(__file__).parent.parent,
-                                                                         'configs/config_train_embed.yml')],
+                                                                         'configs/config_train_original_runs_inv_weights.yml')],
                                       config_file_parser_class=configargparse.YAMLConfigFileParser)
     parser.add_argument('-c', is_config_file=True, help='config file path')
     parser, hparams = build_configargparser(parser)
