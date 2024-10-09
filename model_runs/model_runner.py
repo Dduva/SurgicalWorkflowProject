@@ -131,7 +131,7 @@ class StatefulLSTM(torch.nn.Module):
     def __init__(self, resnet_weights, input_size, hidden_size, num_classes):
         super(StatefulLSTM, self).__init__()
         # resnet_weights = '/Users/dorotheeduvaux 1/UCL CSML/MSc Project/Results/best_model_weights.pth'
-        # input_size = 2048  # should correspond to x.view(x.size(0), -1)
+        # input_size = 2048  # should correspond to x.view(x.size(0), -1);
         # # A higher hidden size should give capacity to learn more from the features
         # hidden_size = 256  # [128, 256 or 512]
         # num_classes = 5

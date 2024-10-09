@@ -43,15 +43,20 @@ def main():
                  # 'server_train_val_paths_labels_fold3',
                  # 'server_train_val_paths_labels_fold4',
                  # 'server_train_val_paths_labels_fold5',
-                 'server_train_val_paths_phases_labels',
-                 'server_train_val_paths_phases_labels_fold2',
-                 'server_train_val_paths_phases_labels_fold3',
-                 'server_train_val_paths_phases_labels_fold4',
-                 'server_train_val_paths_phases_labels_fold5',
+                 # 'server_train_val_paths_phases_labels',
+                 # 'server_train_val_paths_phases_labels_fold2',
+                 # 'server_train_val_paths_phases_labels_fold3',
+                 # 'server_train_val_paths_phases_labels_fold4',
+                 # 'server_train_val_paths_phases_labels_fold5',
+                'server_train_val_paths_coarse_phases_labels',
+                'server_train_val_paths_coarse_phases_labels_fold2',
+                'server_train_val_paths_coarse_phases_labels_fold3',
+                'server_train_val_paths_coarse_phases_labels_fold4',
+                'server_train_val_paths_coarse_phases_labels_fold5',
                  ]
 
-    # ear_type_dict = retrieve_video_ear_type(r'/Users/dorotheeduvaux 1/UCL CSML/MSc Project/RS_data/VS_side.xlsx')
-    ear_type_dict = retrieve_video_ear_type(r'/Users/dorotheeduvaux/UCL CSML/MSc Project/RS_data/VS_side.xlsx')
+    ear_type_dict = retrieve_video_ear_type(r'/Users/dorotheeduvaux 1/UCL CSML/MSc Project/RS_data/VS_side.xlsx')
+    #ear_type_dict = retrieve_video_ear_type(r'/Users/dorotheeduvaux/UCL CSML/MSc Project/RS_data/VS_side.xlsx')
 
     for pkl_file in pkl_files:
         with open(os.path.join(OVERALL_PATH, pkl_file + '.pkl'), 'rb') as file:
